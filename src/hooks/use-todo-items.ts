@@ -76,6 +76,20 @@ export function useTodoItems() {
     persistStatusMap(initial);
   }, [persistStatusMap]);
 
+  // 从云端/导入的 status map 恢复待办状态
+  const applyStatusMap = useCallback((statusMap: Record<string, TodoStatus>) => {
+    const initial = buildInitialCategories();
+    initial.forEach((cat) => {
+      cat.items.forEach((item) => {
+        if (statusMap[item.id] !== undefined) {
+          item.status = statusMap[item.id];
+        }
+      });
+    });
+    setCategories(initial);
+    persistStatusMap(initial);
+  }, [persistStatusMap]);
+
   const overallProgress = useMemo(() => {
     let total = 0;
     let done = 0;
@@ -127,6 +141,7 @@ export function useTodoItems() {
     loading,
     updateItemStatus,
     resetAll,
+    applyStatusMap,
     overallProgress,
     categoryProgress,
     counts,

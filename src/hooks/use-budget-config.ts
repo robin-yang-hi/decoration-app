@@ -33,5 +33,10 @@ export function useBudgetConfig() {
     getStorage().setItem(STORAGE_KEY, JSON.stringify(config));
   }, []);
 
-  return { budget, loading, saveBudget };
+  const setBudgetValue = useCallback((config: IBudgetConfig) => {
+    setBudget(config);
+    getStorage().setItem(STORAGE_KEY, JSON.stringify(config));
+  }, []);
+
+  return { budget, loading, saveBudget, setBudget: setBudgetValue };
 }

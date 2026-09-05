@@ -48,5 +48,10 @@ export function useAiConfig() {
     getStorage().removeItem(STORAGE_KEY);
   }, []);
 
-  return { config, loading, saveAiConfig, clearAiConfig };
+  const setConfigValue = useCallback((next: IAiConfig) => {
+    setConfig(next);
+    getStorage().setItem(STORAGE_KEY, JSON.stringify(next));
+  }, []);
+
+  return { config, loading, saveAiConfig, clearAiConfig, setConfig: setConfigValue };
 }
