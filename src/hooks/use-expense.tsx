@@ -92,7 +92,12 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       try {
         const cloud = await fetchCloudData();
         if (cancelled) return;
-        if (cloud && (cloud.records?.length || cloud.budget || cloud.todoStatus || cloud.aiConfig)) {
+        // 判断云端是否有实际数据（空对象/空数组不算有数据）
+        const hasRecords = Array.isArray(cloud?.records) && cloud.records.length > 0;
+        const hasBudget = !!(cloud?.budget && typeof cloud.budget === 'object' && Object.keys(cloud.budget).length > 0);
+        const hasTodo = !!(cloud?.todoStatus && typeof cloud.todoStatus === 'object' && Object.keys(cloud.todoStatus).length > 0);
+        const hasAi = !!(cloud?.aiConfig?.apiKey);
+        if (cloud && (hasRecords || hasBudget || hasTodo || hasAi)) {
           // 云端有数据，覆盖本地
           if (Array.isArray(cloud.records)) setRecords(cloud.records);
           if (cloud.budget && typeof cloud.budget === 'object') setBudget(cloud.budget as IBudgetConfig);
