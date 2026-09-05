@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "./tailwind-theme.css";
+@import "./typography.css";
+
+/* 手动添加动画关键帧，替代 tw-animate-css */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes zoomOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-50%) translateY(-48%); }
+  to { opacity: 1; transform: translateX(-50%) translateY(-50%); }
+}
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideInFromTop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes accordionDown {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordionUp {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+/* Radix UI 弹窗动画覆盖 */
+[data-state="open"][data-radix-dialog-overlay],
+[data-state="open"][data-radix-alert-dialog-overlay] {
+  animation: fadeIn 0.2s ease-out;
+}
+[data-state="closed"][data-radix-dialog-overlay],
+[data-state="closed"][data-radix-alert-dialog-overlay] {
+  animation: fadeOut 0.15s ease-in;
+}
+[data-state="open"][data-radix-dialog-content],
+[data-state="open"][data-radix-alert-dialog-content] {
+  animation: zoomIn 0.2s ease-out;
+}
+[data-state="closed"][data-radix-dialog-content],
+[data-state="closed"][data-radix-alert-dialog-content] {
+  animation: zoomOut 0.15s ease-in;
+}
+[data-state="open"][data-radix-dropdown-menu-content] {
+  animation: slideInFromTop 0.15s ease-out;
+}
+[data-state="open"][data-radix-accordion-content] {
+  animation: accordionDown 0.2s ease-out;
+}
+[data-state="closed"][data-radix-accordion-content] {
+  animation: accordionUp 0.15s ease-in;
+}
