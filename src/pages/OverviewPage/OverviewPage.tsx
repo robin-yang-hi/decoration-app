@@ -21,6 +21,10 @@ export default function OverviewPage() {
     todoCounts,
     categoryTodoProgress,
     todoCategories,
+    cloudSynced,
+    cloudLoading,
+    cloudLastSaved,
+    syncNow,
   } = useExpense();
 
   const totalSpent = useMemo(
@@ -137,8 +141,18 @@ export default function OverviewPage() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground">装修费用总览</h1>
-                <p className="text-muted-foreground mt-1">
-                  一站式掌握装修花费与进度，数据存储在你的浏览器本地
+                <p className="text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                  一站式掌握装修花费与进度，数据已同步云端多端共用
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted">
+                    {cloudLoading ? (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />同步中…</>
+                    ) : cloudSynced ? (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />已同步{cloudLastSaved ? ` · ${new Date(cloudLastSaved).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})}` : ''}</>
+                    ) : (
+                      <><span className="w-1.5 h-1.5 rounded-full bg-red-500" />离线模式</>
+                    )}
+                  </span>
+                  <button onClick={syncNow} className="text-xs text-primary hover:underline">立即同步</button>
                 </p>
               </div>
               <div className="flex items-center gap-3">

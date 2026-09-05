@@ -58,6 +58,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const [cloudLoading, setCloudLoading] = useState(true);
   const [cloudSynced, setCloudSynced] = useState(false);
   const [cloudLastSaved, setCloudLastSaved] = useState<string | null>(null);
+  const [initialSyncDone, setInitialSyncDone] = useState(false);
 
   // 标记是否已完成首次云端拉取（拉取期间不触发保存，避免空数据覆盖云端）
   const hasSyncedRef = useRef(false);
@@ -73,6 +74,16 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     });
     return map;
   };
+
+  // 组装云端数据 payload
+  const buildPayload = (): CloudData => ({
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    records,
+    budget,
+    todoStatus: getTodoStatusMap(todoCategories),
+    aiConfig: { apiKey: aiConfig.apiKey, model: aiConfig.model, apiBase: aiConfig.apiBase },
+  });
 
   // 启动时从云端拉取数据，覆盖本地
   useEffect(() => {
@@ -100,6 +111,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         if (!cancelled) {
           hasSyncedRef.current = true;
           setCloudLoading(false);
+          setInitialSyncDone(true);
         }
       }
     })();
@@ -109,19 +121,25 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 首次同步完成后，主动上传一次本地数据到云端（确保云端不为空）
+  useEffect(() => {
+    if (!initialSyncDone) return;
+    const payload = buildPayload();
+    saveCloudData(payload).then((ok) => {
+      if (ok) {
+        setCloudSynced(true);
+        setCloudLastSaved(payload.updatedAt);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSyncDone]);
+
   // 数据变更时防抖保存到云端（首次拉取完成后才开始）
   useEffect(() => {
     if (!hasSyncedRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
-      const payload: CloudData = {
-        version: 1,
-        updatedAt: new Date().toISOString(),
-        records,
-        budget,
-        todoStatus: getTodoStatusMap(todoCategories),
-        aiConfig: { apiKey: aiConfig.apiKey, model: aiConfig.model, apiBase: aiConfig.apiBase },
-      };
+      const payload = buildPayload();
       const ok = await saveCloudData(payload);
       if (ok) {
         setCloudSynced(true);
@@ -138,14 +156,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   // 手动立即同步
   const syncNow = () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    const payload: CloudData = {
-      version: 1,
-      updatedAt: new Date().toISOString(),
-      records,
-      budget,
-      todoStatus: getTodoStatusMap(todoCategories),
-      aiConfig: { apiKey: aiConfig.apiKey, model: aiConfig.model, apiBase: aiConfig.apiBase },
-    };
+    const payload = buildPayload();
     saveCloudData(payload).then((ok) => {
       if (ok) {
         setCloudSynced(true);
