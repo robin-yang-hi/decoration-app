@@ -21,7 +21,8 @@
 decoration-app/
 ├── functions/
 │   └── api/
-│       └── data.ts          ← 【后端】Cloudflare Pages Function，/api/data 接口
+│       ├── data.ts          ← 【后端】Cloudflare Pages Function，/api/data 接口（KV 读写）
+│       └── analyze.ts       ← 【后端】/api/analyze 接口（调用 DeepSeek AI，key 存环境变量）
 ├── src/
 │   ├── index.tsx            ← 入口：HashRouter + ErrorBoundary
 │   ├── app.tsx              ← 路由定义（4 个页面）
@@ -29,7 +30,7 @@ decoration-app/
 │   ├── components/
 │   │   ├── Layout.tsx       ← 布局：ExpenseProvider + Header + 移动端底栏
 │   │   ├── Header.tsx       ← 顶部导航 + PDF/CSV/备份/导入按钮
-│   │   ├── AiAnalysisDialog.tsx  ← AI 分析弹窗（当前是本地规则，非真实 API）
+│   │   ├── AiAnalysisDialog.tsx  ← AI 分析弹窗（调用后端 /api/analyze）
 │   │   └── ui/              ← Radix UI 基础组件（button/dialog/card...）
 │   ├── hooks/
 │   │   ├── use-expense.tsx  ← 【核心】ExpenseProvider，聚合 + 云端同步
@@ -77,7 +78,7 @@ decoration-app/
 
 - KV 绑定变量名：`DECO_DATA`（在 Cloudflare Dashboard 配置，代码里通过 `context.env.DECO_DATA` 访问）
 - KV key：`decoration_data_v1`
-- 云端数据结构：`{ version, updatedAt, records, budget, todoStatus, aiConfig }`
+- 云端数据结构：`{ version, updatedAt, records, budget, todoStatus, aiConfig }`（aiConfig.apiKey 恒为空字符串，真实 key 存环境变量）
 - **防抖 1.5 秒**：数据变化后 1.5 秒自动保存到云端，不要在每次操作里手动调用 saveCloudData
 - **首次同步**：启动时拉取云端，有实际数据则覆盖本地；为空则主动上传本地
 - **空对象不算有数据**：判断云端是否有数据时，`todoStatus` 必须 `Object.keys().length > 0`，`budget` 必须有非零字段，`records` 必须非空数组
@@ -130,12 +131,13 @@ decoration-app/
 2. 数据从 `useExpense()` 获取
 3. 用 `src/lib/utils.ts` 的 `exportBackupJSON` 或自定义 Blob 下载
 
-### 3.5 接入真实 AI API
+### 3.5 修改 AI 分析逻辑
 
-1. `src/components/AiAnalysisDialog.tsx` 当前是 `setTimeout` 模拟的本地规则
-2. 用 `useExpense()` 的 `aiConfig` 获取 apiKey/model/apiBase
-3. 调用豆包方舟 API（`https://ark.cn-beijing.volces.com/api/v3/chat/completions`）
-4. 将 records/budget 组装成 prompt，发送请求，渲染返回的 markdown
+1. 前端在 `src/components/AiAnalysisDialog.tsx`，POST 数据到 `/api/analyze`
+2. 后端在 `functions/api/analyze.ts`，用环境变量 `DEEPSEEK_API_KEY` 调用 DeepSeek API
+3. API Key **不能**存前端或 KV，必须存 Cloudflare 加密环境变量（Settings → Environment variables → Encrypt）
+4. 已加频率限制：每 IP 每分钟 10 次（用 KV 存计数）
+5. 换其他 AI（豆包/通义/GPT）只需改 `analyze.ts` 里的 `DEEPSEEK_API_BASE` 和 `DEEPSEEK_MODEL`
 
 ### 3.6 修改云端同步逻辑
 
@@ -266,4 +268,4 @@ npm run dev          # http://localhost:5173
 3. **小步提交**：每次修改后 `npm run build`（或至少 `tsc --noEmit`）验证类型
 4. **部署后验证**：push 后等 2 分钟，用 curl 验证页面和 API
 5. **不破坏现有功能**：新增功能时，不要改现有导出格式、数据结构的字段名（会导致旧备份无法导入）
-6. **用户偏好**：全中文界面；暖木棕主题；标题后缀"维佳关山郡"不可去掉；免费方案优先
+6. **用户偏好**：全中文界面；暖木棕主题；标题后缀"维佳关山郡1002"不可去掉；免费方案优先

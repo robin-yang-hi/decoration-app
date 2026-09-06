@@ -8,7 +8,7 @@
 
 | 项目 | 内容 |
 |---|---|
-| 项目名称 | 装修费用管家（维佳关山郡） |
+| 项目名称 | 装修费用管家（维佳关山郡1002） |
 | 线上地址 | https://decoration-app.pages.dev |
 | 代码仓库 | https://github.com/robin-yang-hi/decoration-app |
 | 部署平台 | Cloudflare Pages（免费） |
@@ -95,10 +95,14 @@
 │                                                      │
 │  静态资源（dist/）  ←→  /api/data (Pages Function)   │
 │                           │                          │
+│  AI 分析按钮 → /api/analyze (Pages Function)         │
+│                           │                          │
 │                           ▼                          │
 │                    Cloudflare KV                     │
 │                    key: decoration_data_v1           │
 │                    value: 全部数据 JSON               │
+│                                                      │
+│  /api/analyze → DeepSeek API（key存加密环境变量）      │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -129,7 +133,7 @@
 - `<Toaster />` 全局 toast
 
 **`src/components/Header.tsx`**
-- 左侧：Logo + 标题"装修费用管家" + 小号后缀"维佳关山郡"
+- 左侧：Logo + 标题"装修费用管家" + 小号后缀"维佳关山郡1002"
 - 中间：4 个导航链接（桌面端）
 - 右侧：4 个导出/导入按钮（PDF / CSV / 备份 / 导入）
 - 移动端：汉堡菜单 → Sheet 抽屉，包含导航 + 导出功能
@@ -156,7 +160,7 @@ useAiConfig        → config, saveAiConfig
   │
   ├─ fetchCloudData() → GET /api/data
   │     │
-  │     ├─ 云端有实际数据（records非空 / budget非空 / todoStatus有key / aiConfig有apiKey）
+  │     ├─ 云端有实际数据（records非空 / budget非空 / todoStatus有key）
   │     │     → 用云端数据覆盖各 hook 的本地状态
   │     │
   │     └─ 云端为空或拉取失败
@@ -239,7 +243,7 @@ return { state, 操作函数, setXxx（供云端覆盖用） }
 - 装修进度总览：总体进度条 + 10 个分类进度条
 - 分类费用占比：echarts 饼图
 - 月度支出趋势：echarts 柱状图（按月聚合）
-- AI 分析按钮 → AiAnalysisDialog
+- AI 分析按钮 → AiAnalysisDialog → 调用后端 /api/analyze → DeepSeek API 生成专业分析报告
 - 云端同步状态指示器（🟢已同步 / 🟠同步中 / 🔴离线）+ 立即同步按钮
 
 **RecordsPage（费用记录页）**
@@ -324,6 +328,6 @@ npm run preview  # 预览构建产物
 
 1. **多端非实时同步**：当前是拉取模式（刷新页面才获取最新），如需实时可加 30 秒轮询或 WebSocket
 2. **无用户认证**：KV 是单用户共享，任何人知道网址都能修改数据。如需多用户需加认证
-3. **AI 分析为本地规则**：AiAnalysisDialog 当前是本地计算的模板化建议，接入真实豆包 API 需用户配置 apiKey
+3. **AI 分析依赖外部 API**：通过后端 /api/analyze 调用 DeepSeek API，API Key 存在 Cloudflare 加密环境变量（前端不可见），每 IP 每分钟限 10 次；需用户自行配置 DeepSeek API Key
 4. **无数据版本历史**：KV 每次覆盖写，误删无法回滚（建议定期用"备份"按钮导出 JSON）
 5. **KV 最终一致性**：Cloudflare KV 是最终一致性，极端情况下两端同时修改可能有几秒延迟

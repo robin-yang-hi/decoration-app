@@ -36,7 +36,7 @@ function buildPDFContent(params: PDFExportParams): HTMLDivElement {
   let html = `
     <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #8B5A2B;">
       <h1 style="font-size: 28px; font-weight: 700; color: #8B5A2B; margin: 0;">装修费用报告</h1>
-      <p style="font-size: 14px; color: #666; margin-top: 8px;">维佳关山郡 · ${new Date().toLocaleDateString('zh-CN')}</p>
+      <p style="font-size: 14px; color: #666; margin-top: 8px;">维佳关山郡1002 · ${new Date().toLocaleDateString('zh-CN')}</p>
     </div>
 
     <h2 style="font-size: 18px; font-weight: 600; color: #8B5A2B; margin: 24px 0 16px; padding-left: 10px; border-left: 4px solid #8B5A2B;">一、费用总览</h2>
@@ -141,7 +141,7 @@ function buildPDFContent(params: PDFExportParams): HTMLDivElement {
   }
 
   html += `<div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e0d5c5; text-align: center; font-size: 11px; color: #aaa;">
-    本报告由装修费用管家（维佳关山郡）自动生成 · ${new Date().toLocaleString('zh-CN')}
+    本报告由装修费用管家（维佳关山郡1002）自动生成 · ${new Date().toLocaleString('zh-CN')}
   </div>`;
 
   container.innerHTML = html;
@@ -180,7 +180,7 @@ export async function generateExpensePDF(params: PDFExportParams): Promise<void>
       heightLeft -= pdfHeight;
     }
 
-    pdf.save(`装修费用报告_维佳关山郡_${new Date().toISOString().slice(0, 10)}.pdf`);
+    pdf.save(`装修费用报告_维佳关山郡1002_${new Date().toISOString().slice(0, 10)}.pdf`);
   } finally {
     document.body.removeChild(container);
   }
