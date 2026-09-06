@@ -9,9 +9,6 @@ import {
 } from '@/components/ui/dialog';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useExpense } from '@/hooks/use-expense';
-import { CATEGORY_LABELS } from '@/data/category-config';
-import { formatCurrency } from '@/lib/utils';
-import type { ExpenseCategory } from '@/data/input-number';
 import { toast } from 'sonner';
 
 export default function AiAnalysisDialog() {
@@ -28,64 +25,24 @@ export default function AiAnalysisDialog() {
     setLoading(true);
     setAnalysis('');
 
-    // 本地计算的简单分析
-    setTimeout(() => {
-      const totalSpent = records.reduce((s, r) => s + r.amount, 0);
-      const categoryTotals: Record<string, number> = {};
-      records.forEach((r) => {
-        categoryTotals[r.category] = (categoryTotals[r.category] || 0) + r.amount;
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records, budget }),
       });
-
-      const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
-      const topCategory = sorted[0];
-      const topCategoryLabel = CATEGORY_LABELS[topCategory[0] as ExpenseCategory];
-      const topCategoryPercent = totalSpent > 0 ? ((topCategory[1] / totalSpent) * 100).toFixed(1) : '0';
-
-      const overBudget = budget.totalBudget > 0 && totalSpent > budget.totalBudget;
-      const budgetPercent = budget.totalBudget > 0 ? ((totalSpent / budget.totalBudget) * 100).toFixed(1) : '0';
-
-      const tips: string[] = [];
-      if (overBudget) {
-        tips.push('⚠️ 目前已超出总预算，建议重新审视非必要支出，优先保证硬装和主材质量。');
-      } else if (Number(budgetPercent) > 80) {
-        tips.push('⚡ 预算使用率已超过 80%，后续软装和家电部分请做好取舍规划。');
-      } else {
-        tips.push('✅ 预算控制良好，可以继续按计划推进。');
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || `请求失败（${res.status}）`);
       }
-
-      if (topCategory && Number(topCategoryPercent) > 40) {
-        tips.push(`📊 ${topCategoryLabel}占比达到 ${topCategoryPercent}%，是目前最大的支出板块，建议重点关注该板块的后续花费。`);
-      }
-
-      tips.push('💡 建议定期回顾分类占比，及时调整预算分配，避免后期超支。');
-      tips.push(`📝 当前共 ${records.length} 条记录，持续记账可以更好地掌握装修花费全貌。`);
-
-      setAnalysis(`
-## 装修费用分析报告
-
-### 总览
-
-- **累计总支出**：¥${formatCurrency(totalSpent)}
-- **记录笔数**：${records.length} 笔
-${budget.totalBudget > 0 ? `- **预算使用率**：${budgetPercent}%` : '- **预算状态**：尚未设置总预算'}
-
-### 分类支出排行
-
-${sorted.slice(0, 5).map(([cat, amt], i) => {
-  const label = CATEGORY_LABELS[cat as ExpenseCategory];
-  const pct = totalSpent > 0 ? ((amt / totalSpent) * 100).toFixed(1) : '0';
-  return `${i + 1}. **${label}**：¥${formatCurrency(amt)}（${pct}%）`;
-}).join('\n')}
-
-### 建议
-
-${tips.map((t, i) => `${i + 1}. ${t}`).join('\n')}
-
----
-*以上分析基于您已记录的费用数据，仅供参考。*
-      `.trim());
+      setAnalysis(data.content || '分析结果为空，请重试。');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`AI 分析失败：${msg}`);
+      setAnalysis(`分析失败：${msg}\n\n可能原因：\n- 管理员尚未配置 DeepSeek API Key\n- 网络连接异常\n- 调用过于频繁`);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (

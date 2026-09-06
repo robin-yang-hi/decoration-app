@@ -75,14 +75,14 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     return map;
   };
 
-  // 组装云端数据 payload
+  // 组装云端数据 payload（注意：apiKey 不存云端，防止泄露）
   const buildPayload = (): CloudData => ({
     version: 1,
     updatedAt: new Date().toISOString(),
     records,
     budget,
     todoStatus: getTodoStatusMap(todoCategories),
-    aiConfig: { apiKey: aiConfig.apiKey, model: aiConfig.model, apiBase: aiConfig.apiBase },
+    aiConfig: { apiKey: '', model: aiConfig.model, apiBase: aiConfig.apiBase },
   });
 
   // 启动时从云端拉取数据，覆盖本地
